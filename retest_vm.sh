@@ -50,7 +50,7 @@ PRIV_ROUTER=`quantum router-list | grep private_router_1 | awk -F' ' '{print $2}
 
 # Let's see if we can hit our node
 ip netns exec qrouter-${PRIV_ROUTER} ip addr list
-if ! `ip netns exec qrouter-${PRIV_ROUTER} /bin/ping -c 3 10.${VLAN}.1.3` ;then
+if ! ip netns exec qrouter-${PRIV_ROUTER} /bin/ping -c 3 10.${VLAN}.1.3 ;then
  echo '!!!! Cant ping the host!!!'
  echo 'Exiting. Fix your network, then try again'
  exit 1
