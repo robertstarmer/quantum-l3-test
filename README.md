@@ -10,5 +10,6 @@ Test L3 Quantum model
 If that fails, you can try:
 
 1) reset.sh
-2) retest\_vm.sh
+2) net\_setup.sh
+3) retest\_vm.sh
 
