@@ -16,7 +16,7 @@ fi
 
 PRIV_SUBNET_ID=`quantum subnet-list | grep '192.' | awk -F' ' '{print $2}'`
 FLOAT_ID=`quantum floatingip-list | grep 192 | awk -F' ' '{print $2}'`
- if ! quantum floatingip-delete $FLOATING_ID >&/dev/null ; then
+ if ! quantum floatingip-delete $FLOAT_ID >&/dev/null ; then
   echo perhaps you did not create a floating ip?
   echo continuing...
  fi
