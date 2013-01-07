@@ -69,13 +69,6 @@ PRIV_NET="10.${VLAN}.1.0/24"
 PUB_NET_ID=`quantum net-list | grep ' public ' | awk -F' ' '{print $2}'`
 PRIV_ROUTER=`quantum router-list | grep private_router_1 | awk -F' ' '{print $2}'`
 
-# Let's see if we can hit our node
-ip netns exec qrouter-${PRIV_ROUTER} ip addr list
-if ! ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 10.${VLAN}.1.3 ;then
- echo '!!!! Cant ping the host!!!'
- echo 'Exiting. Fix your network, then try again'
- exit 1
-fi
 
 # Now, for a floating IP
 VM_PORT_ID=`quantum port-list | grep "10.${VLAN}.1.3" | awk -F' ' '{print $2}'`
@@ -83,3 +76,11 @@ FLOAT_ID=`quantum floatingip-create ${PUB_NET_ID} | grep ' id ' | awk -F' ' '{pr
 FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $3}'`
 echo "Floating IP: ${FLOAT_IP}"
 quantum floatingip-associate ${FLOAT_ID} ${VM_PORT_ID}
+
+# Let's see if we can hit our node
+ip netns exec qrouter-${PRIV_ROUTER} ip addr list
+if ! ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 10.${VLAN}.1.3 ;then
+ echo '!!!! Cant ping the host!!!'
+ echo 'Exiting. Fix your network, then try again'
+ exit 1
+fi
