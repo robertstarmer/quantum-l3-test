@@ -56,7 +56,8 @@ fi
 sleep 15
 
 # Show the state of the system we just requested.
-nova show $instance_name
+PRIV_IP=`nova show $instance_name | grep 'private network' | awk -F' ' '{print $5}'`
+echo PRIVATE IP: ${PRIV_IP}
 
 ## wait for the server to boot
 #sleep 15
@@ -71,14 +72,14 @@ nova show $instance_name
 
 PUB_NET_ID=`quantum net-list | grep ' public ' | awk -F' ' '{print $2}'`
 PRIV_ROUTER=`quantum router-list | grep private_router_1 | awk -F' ' '{print $2}'`
-
+echo "PUB_NET: ${PUB_NET_ID}, ROUTER: ${PRIV_ROUTER}"
 
 # Now, for a floating IP
 VM_PORT_ID=`quantum port-list | grep "${PRIV_IP}" | awk -F' ' '{print $2}'`
 FLOAT_ID=`quantum floatingip-create ${PUB_NET_ID} | grep ' id ' | awk -F' ' '{print $4}'`
-FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $3}'`
+
+FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $6}'`
 echo "Floating IP: ${FLOAT_IP}"
-quantum floatingip-associate ${FLOAT_ID} ${VM_PORT_ID}
 
 # Let's see if we can hit our node
 ip netns exec qrouter-${PRIV_ROUTER} ip addr list
