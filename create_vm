@@ -43,9 +43,13 @@ fi
 # initialize a network in quantum for use by VMs and assign it a non-routed subnet
 NET_ID=`quantum net-list | grep private | awk -F' ' '{ print $2 }'`
 
+if [ -z ${NET_ID} ] ; then
+  ./net_setup
+  NET_ID=`quantum net-list | grep private | awk -F' ' '{ print $2 }'`
+fi
 instance_name='precise_test_vm'
 # Boot the added image against the "1" flavor which by default maps to a micro instance.   Include the percise_test group so our address will work when we add it later 
-NOVA_EXIST=`nova show ${instance_name}`
+NOVA_EXIST=`nova list | grep ${instance_name}`
 if ! [ "${NOVA_EXIST}" ] ; then
   nova boot --flavor 1 --security_groups nova_test --nic net-id=${NET_ID} --image ${IMAGE_ID} --key_name key_percise $instance_name
 else
@@ -78,7 +82,11 @@ echo "PUB_NET: ${PUB_NET_ID}, ROUTER: ${PRIV_ROUTER}"
 VM_PORT_ID=`quantum port-list | grep "${PRIV_IP}" | awk -F' ' '{print $2}'`
 FLOAT_ID=`quantum floatingip-create ${PUB_NET_ID} | grep ' id ' | awk -F' ' '{print $4}'`
 
-FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $6}'`
+FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $5}'`
+if [ ${FLOAT_IP} == '|' ] ; then
+  sleep 5
+  FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $6}'`
+fi
 echo "Floating IP: ${FLOAT_IP}"
 
 # Let's see if we can hit our node
