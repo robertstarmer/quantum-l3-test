@@ -29,14 +29,14 @@ function valid_ip()
 # Find the Public and private networks:
 [ -e .network ] && source .network 
 [ -z ${PUB_IP} ] && PUB_IP="192.168.0.0"
-read -p "What is your public network IP [${PUB_IP}]: " IP_IN
+read -t 5 -p "What is your public network IP [${PUB_IP}]: " IP_IN
 [ -z ${IP_IN} ] ||PUB_IP=${IP_IN}
 if  ! valid_ip ${PUB_IP} ; then
  die "Please enter a valid public ip"
 fi
 
 [ -z ${PUB_CIDR} ] && PUB_CIDR='24'
-read -p "What is the CIDR for that network[${PUB_CIDR}]: " PUB_CIDR
+read -t 5 -p "What is the CIDR for that network[${PUB_CIDR}]: " PUB_CIDR
 [ -z ${PUB_CIDR} ] && PUB_CIDR='24'
 # We use 192.168.VLAN.0/24 as our public network range(s)
 PUB_NET="${PUB_IP}/${PUB_CIDR}"
@@ -47,13 +47,13 @@ echo "export PUB_CIDR=${PUB_CIDR}" >> .network
 # We use 10.VLAN.1.0/24 for our private default network(s)
 # Find the Private and private networks:
 [ -z ${PRIV_IP} ] && PRIV_IP="10.168.0.0"
-read -p "What is your private network IP [${PRIV_IP}]: " IP_IN
+read -t 5 -p "What is your private network IP [${PRIV_IP}]: " IP_IN
 [ -z ${IP_IN} ] || PRIV_IP=${IP_IN}
 if  ! valid_ip ${PRIV_IP} ; then
  die "Please enter a valid public ip"
 fi
 [ -z ${PRIV_CIDR} ] && PRIV_CIDR='24'
-read -p "What is the CIDR for that network[${PRIV_CIDR}]: " PRIV_CIDR
+read -t 5 -p "What is the CIDR for that network[${PRIV_CIDR}]: " PRIV_CIDR
 [ -z ${PRIV_CIDR} ] && PRIV_CIDR='24'
 PRIV_NET="${PRIV_IP}/${PRIV_CIDR}"
 

@@ -30,11 +30,13 @@ fi
 
 # create a security group so that we can allow ssh, http, and ping traffic
 # when we add a floating IP (assuming you are adding floating IPs)
+SEC_GROUP=`nova secgroup-list | grep nova_test`
+if [ -z "${SEC_GROUP}" ] ; then
 nova secgroup-create nova_test 'Precise test security group'
 nova secgroup-add-rule nova_test tcp 22 22 0.0.0.0/0
 nova secgroup-add-rule nova_test tcp 80 80 0.0.0.0/0
 nova secgroup-add-rule nova_test icmp -1 -1 0.0.0.0/0
-
+fi
 # request a floating IP address, and extract the address from the results message
 # floating_ip=`nova floating-ip-create | grep None | awk '{print $2}'`
 
@@ -43,7 +45,8 @@ NET_ID=`quantum net-list | grep private | awk -F' ' '{ print $2 }'`
 
 instance_name='precise_test_vm'
 # Boot the added image against the "1" flavor which by default maps to a micro instance.   Include the percise_test group so our address will work when we add it later 
-if ! [ `nova show ${instance_name}`] ; then
+NOVA_EXIST=`nova show ${instance_name}`
+if ! [ "${NOVA_EXIST}" ] ; then
   nova boot --flavor 1 --security_groups nova_test --nic net-id=${NET_ID} --image ${IMAGE_ID} --key_name key_percise $instance_name
 else
  exit 1
@@ -81,8 +84,8 @@ quantum floatingip-associate ${FLOAT_ID} ${VM_PORT_ID}
 ip netns exec qrouter-${PRIV_ROUTER} ip addr list
 echo sleeping for 5 seconds
 sleep 10
-echo pinging inside host: ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 10.${VLAN}.1.3
-if ! ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 10.${VLAN}.1.3 ;then
+echo pinging inside host: ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 ${FLOAT_IP}
+if ! ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 ${FLOAT_IP} ;then
  echo '!!!! Cant ping the host!!!'
  echo 'Exiting. Fix your network, then try again'
  exit 1
