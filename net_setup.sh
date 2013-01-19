@@ -4,18 +4,69 @@ source ~/openrc
 # define Subnet IPs.  We'll do this here for both our "public" access network
 # and for the OpenStack L3 agent NATd network
 
+function die ( ) {
+  echo $@
+  exit 1
+}
 
-if [ -z ${VLAN:?VLAN must be set} ] ; then
- echo 'please set your VLAN id'
- exit 1
+function valid_ip()
+{
+    local  ip=$1
+    local  stat=1
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
+
+# Find the Public and private networks:
+[ -e .network ] && source .network 
+[ -z ${PUB_IP} ] && PUB_IP="192.168.0.0"
+read -p "What is your public network IP [${PUB_IP}]: " IP_IN
+[ -z ${IP_IN} ] ||PUB_IP=${IP_IN}
+if  ! valid_ip ${PUB_IP} ; then
+ die "Please enter a valid public ip"
 fi
+
+[ -z ${PUB_CIDR} ] && PUB_CIDR='24'
+read -p "What is the CIDR for that network[${PUB_CIDR}]: " PUB_CIDR
+[ -z ${PUB_CIDR} ] && PUB_CIDR='24'
 # We use 192.168.VLAN.0/24 as our public network range(s)
-PUB_NET="192.168.${VLAN}.0/24"
+PUB_NET="${PUB_IP}/${PUB_CIDR}"
+
+echo "export PUB_IP=${PUB_IP}" > .network
+echo "export PUB_CIDR=${PUB_CIDR}" >> .network
+
 # We use 10.VLAN.1.0/24 for our private default network(s)
-PRIV_NET="10.${VLAN}.1.0/24"
+# Find the Private and private networks:
+[ -z ${PRIV_IP} ] && PRIV_IP="10.168.0.0"
+read -p "What is your private network IP [${PRIV_IP}]: " IP_IN
+[ -z ${IP_IN} ] || PRIV_IP=${IP_IN}
+if  ! valid_ip ${PRIV_IP} ; then
+ die "Please enter a valid public ip"
+fi
+[ -z ${PRIV_CIDR} ] && PRIV_CIDR='24'
+read -p "What is the CIDR for that network[${PRIV_CIDR}]: " PRIV_CIDR
+[ -z ${PRIV_CIDR} ] && PRIV_CIDR='24'
+PRIV_NET="${PRIV_IP}/${PRIV_CIDR}"
+
+echo "export PRIV_IP=${PRIV_IP}" >> .network
+echo "export PRIV_CIDR=${PRIV_CIDR}" >> .network
+
+#
 echo "Public Private Subnets: ${PUB_NET} ${PRIV_NET}"
+
 # Create a the public network, the l3 agent connection, and associate an IP
 # subnet to it
+PUB_NET_ID=`quantum net-list | grep public`
+[ -z "${PUB_NET_ID}" ] || die 'Delete your networks and try again'
 if ! PUB_NET_ID=`quantum net-create public --router:external=True | grep ' id ' | awk -F' ' '{print $4}'`; then
  echo 'no public net created'
  exit 1
@@ -37,5 +88,5 @@ PRIV_ROUTER_INT=`quantum router-interface-add private_router_1 "${PRIV_SUBNET_ID
 # Now connect the router to the external public newtork
 PUB_PRIV_ROUTER=`quantum router-gateway-set private_router_1 "${PUB_NET_ID}" | grep ' id ' | awk -F' ' '{print $4}'`
 PUB_NETWORK=`quantum port-list -- --device_id ${PRIV_ROUTER} --device_owner network:router_gateway | grep ip_address | awk -F'"' '{print $8}'`
-echo "Private Router and Subnet ID: ${PUB_NETWORK}"
-
+#PRIV_ROUTER=`quantum router-list | grep private_router_1 | awk -F' ' '{print $2}'`
+echo "Private Router and Subnet ID: qrouter-${PRIV_ROUTER} ${PUB_NETWORK}"

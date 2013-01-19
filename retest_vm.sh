@@ -56,6 +56,9 @@ echo "Floating IP: ${FLOAT_IP}"
 quantum floatingip-associate ${FLOAT_ID} ${VM_PORT_ID}
 # Let's see if we can hit our node
 ip netns exec qrouter-${PRIV_ROUTER} ip addr list
+echo sleeping for 5 seconds
+sleep 5
+echo pinging inside host: ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 10.${VLAN}.1.3
 if ! ip netns exec qrouter-${PRIV_ROUTER} /bin/ping -c 3 10.${VLAN}.1.3 ;then
  echo '!!!! Cant ping the host!!!'
  echo 'Exiting. Fix your network, then try again'

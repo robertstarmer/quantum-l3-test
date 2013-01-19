@@ -44,4 +44,10 @@ if ! quantum router-delete private_router_1 ; then
 # exit 1
 fi
 
+if ! quantum-netns-cleanup ; then
+ echo 'quantum-netns-cleanup failed!'
+# exit 1
+fi
 exit 0
+
+
