@@ -30,7 +30,7 @@ function valid_ip()
 # Find the Public and private networks:
 [ -e .network ] && source .network 
 echo -e "Current net info:\nPublic: ${PUB_IP}/${PUB_CIDR}\nPrivate: ${PRIV_IP}/${PRIV_CIDR}\nDNS: ${DNS}\n\n"
-read -t 5 -p "Would you like to change this. The script will proceed in 5 seconds: (y|n) [n]: " CHANGE
+read -p "Would you like to change this. The script will proceed in 5 seconds: (y|n) [n]: " CHANGE
 if [ -z ${CHANGE} ] ; then 
   CHANGE="n"
 fi
