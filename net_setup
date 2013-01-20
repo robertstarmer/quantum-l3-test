@@ -66,7 +66,9 @@ echo "export PRIV_IP=${PRIV_IP}" >> .network
 echo "export PRIV_CIDR=${PRIV_CIDR}" >> .network
 
 fi
-
+if ! valid_IP ${PUB_IP} ; then
+ die "Please enter a valid ip address"
+fi
 PUB_NET="${PUB_IP}/${PUB_CIDR}"
 PRIV_NET="${PRIV_IP}/${PRIV_CIDR}"
 echo -e  "\n\nPublic Private Subnets: ${PUB_NET} ${PRIV_NET}"
