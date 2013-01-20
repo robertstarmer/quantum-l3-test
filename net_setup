@@ -29,7 +29,7 @@ function valid_ip()
 
 # Find the Public and private networks:
 [ -e .network ] && source .network 
-echo -e "Current net info:\nPublic: ${PUB_IP}/${PUB_CIDR}\nPrivate: ${PRIV_IP}/${PRIV_CIDR}\n"
+echo -e "Current net info:\nPublic: ${PUB_IP}/${PUB_CIDR}\nPrivate: ${PRIV_IP}/${PRIV_CIDR}\nDNS: ${DNS}\n\n"
 read -t 5 -p "Would you like to change this. The script will proceed in 5 seconds: (y|n) [n]: " CHANGE
 if [ -z ${CHANGE} ] ; then 
   CHANGE="n"
@@ -65,13 +65,17 @@ read -p "What is the CIDR for that network[${PRIV_CIDR}]: " PRIV_CIDR
 echo "export PRIV_IP=${PRIV_IP}" >> .network
 echo "export PRIV_CIDR=${PRIV_CIDR}" >> .network
 
+[ -z ${DNS} ] && DNS=`grep nameserver /etc/resolv.conf | head -1 | awk -F' ' '{print $2}'`
+read -p "What is the DNS for your public network[${DNS}]: " DNS
+[ -z ${DNS} ] && DNS=`grep nameserver /etc/resolv.conf | head -1 | awk -F' ' '{print $2}'`
+echo "export DNS=${DNS}" >> .network
 fi
 if ! valid_ip ${PUB_IP} ; then
  die "Please enter a valid ip address"
 fi
 PUB_NET="${PUB_IP}/${PUB_CIDR}"
 PRIV_NET="${PRIV_IP}/${PRIV_CIDR}"
-echo -e  "\n\nPublic Private Subnets: ${PUB_NET} ${PRIV_NET}"
+echo -e  "\n\nPublic Private Subnets: ${PUB_NET} ${PRIV_NET}, DNS: ${DNS}"
 # Create a the public network, the l3 agent connection, and associate an IP
 # subnet to it
 PUB_NET_ID=`quantum net-list | grep public`
@@ -88,7 +92,7 @@ fi
 echo "Public Net and Subnet ID: ${PUB_NET_ID} ${PUB_SUBNET_ID}"
 # Create the private network, ans assicate an IP, L3 cnnection is next
 PRIV_NET_ID=`quantum net-create private | grep ' id ' | awk -F' ' '{print $4}'`
-PRIV_SUBNET_ID=`quantum subnet-create private ${PRIV_NET} | grep ' id ' | awk -F' ' '{print $4}'`
+PRIV_SUBNET_ID=`quantum subnet-create private ${PRIV_NET}  --dns_nameservers list=true ${DNS} | grep ' id ' | awk -F' ' '{print $4}'`
 echo "Private Net and Subnet ID: ${PRIV_NET_ID} ${PRIV_SUBNET_ID}"
 # Create a router, and connect it to the private network
 PRIV_ROUTER=`quantum router-create private_router_1 | grep ' id ' | awk -F' ' '{print $4}'`

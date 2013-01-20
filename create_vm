@@ -7,7 +7,19 @@ source .network
 # Our generic lab model is to create a network that uses the VLAN id to help
 # define Subnet IPs.  We'll do this here for both our "public" access network
 # and for the OpenStack L3 agent NATd network
-
+function sleep_count  () {
+# pass in a time (usually in seconds) and a message ( in "")
+echo -n $2
+  count=1
+  while [ $count -le $1 ]
+  do
+    echo -n '. '
+    sleep 1
+    (( count ++ ))
+  done
+  echo "done"
+}
+   
 # otherwise, use an Ubuntu precise image. This is a larger image, but a little more
 # feature-full and realistic
 IMAGE_ID=`glance index | grep 'precise-amd64' | head -1 |  awk -F' ' '{print $1}'`
@@ -57,7 +69,7 @@ else
 fi
 
 # let the system catch up
-sleep 15
+sleep_count 15 "Sleeping for 15 seconds to allow the system to catch up"
 
 # Show the state of the system we just requested.
 PRIV_IP=`nova show $instance_name | grep 'private network' | awk -F' ' '{print $5}'`
@@ -84,15 +96,14 @@ FLOAT_ID=`quantum floatingip-create ${PUB_NET_ID} | grep ' id ' | awk -F' ' '{pr
 
 FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $5}'`
 if [ ${FLOAT_IP} == '|' ] ; then
-  sleep 5
+  sleep_count 10 "Waiting for the IP to be associated and quantum to catch up..."
   FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $6}'`
 fi
 echo "Floating IP: ${FLOAT_IP}"
 quantum floatingip-associate ${FLOAT_ID} ${VM_PORT_ID}
 # Let's see if we can hit our node
 ip netns exec qrouter-${PRIV_ROUTER} ip addr list
-echo sleeping for 5 seconds
-sleep 10
+sleep_count 10 "Waiting for the IP to be associated and quantum to catch up..."
 echo pinging inside host: ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 ${FLOAT_IP}
 if ! ip netns exec qrouter-${PRIV_ROUTER} ping -c 3 ${FLOAT_IP} ;then
  echo '!!!! Cant ping the host!!!'
