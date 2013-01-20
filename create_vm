@@ -88,7 +88,7 @@ if [ ${FLOAT_IP} == '|' ] ; then
   FLOAT_IP=`quantum floatingip-list | grep ${FLOAT_ID} | awk -F' ' '{print $6}'`
 fi
 echo "Floating IP: ${FLOAT_IP}"
-
+quantum floatingip-associate ${FLOAT_ID} ${VM_PORT_ID}
 # Let's see if we can hit our node
 ip netns exec qrouter-${PRIV_ROUTER} ip addr list
 echo sleeping for 5 seconds
