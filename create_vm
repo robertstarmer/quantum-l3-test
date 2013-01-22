@@ -24,7 +24,7 @@ echo -n $2
 # feature-full and realistic
 IMAGE_ID=`glance index | grep 'precise-amd64' | head -1 |  awk -F' ' '{print $1}'`
 if [ -z ${IMAGE_ID} ]; then
-  wget http://192.168.26.163/precise.img
+  wget http://128.107.252.163/precise.img
   # import that image into glance
   glance image-create --name="precise-amd64" --is-public=true --container-format=ovf --disk-format=qcow2 < precise.img
   # Caputre the Image ID so taht we can call the right UUID for this image
