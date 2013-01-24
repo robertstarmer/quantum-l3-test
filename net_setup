@@ -103,3 +103,4 @@ PUB_PRIV_ROUTER=`quantum router-gateway-set private_router_1 "${PUB_NET_ID}" | g
 PUB_NETWORK=`quantum port-list -- --device_id ${PRIV_ROUTER} --device_owner network:router_gateway | grep ip_address | awk -F'"' '{print $8}'`
 #PRIV_ROUTER=`quantum router-list | grep private_router_1 | awk -F' ' '{print $2}'`
 echo "Private Router and Subnet ID: qrouter-${PRIV_ROUTER} ${PUB_NETWORK}"
+router add -net ${PRIV_IP}/${PRIV_CIDR} gw ${PUB_NETWORK}
