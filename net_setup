@@ -1,9 +1,5 @@
 #!/bin/bash
-set +x
 source ~/openrc
-# Our generic lab model is to create a network that uses the VLAN id to help
-# define Subnet IPs.  We'll do this here for both our "public" access network
-# and for the OpenStack L3 agent NATd network
 
 function die ( ) {
   echo $@
@@ -28,37 +24,36 @@ function valid_ip()
 }
 
 # Find the Public and private networks:
-[ -e .network ] && source .network 
+[ -e .network ] && source .network >& /dev/null
+[ -z ${PUB_IP} ] && PUB_IP="192.168.0.0"
+[ -z ${PUB_CIDR} ] && PUB_CIDR='24'
+[ -z ${PRIV_IP} ] && PRIV_IP="10.168.0.0"
+[ -z ${PRIV_CIDR} ] && PRIV_CIDR='24'
+[ -z ${DNS} ] && DNS='192.168.0.254'
+
 echo -e "Current net info:\nPublic: ${PUB_IP}/${PUB_CIDR}\nPrivate: ${PRIV_IP}/${PRIV_CIDR}\nDNS: ${DNS}\n\n"
-read -p "Would you like to change this. The script will proceed in 5 seconds: (y|n) [n]: " CHANGE
+read -p "Would you like to change this? (y|n) [n]: " CHANGE
 if [ -z ${CHANGE} ] ; then 
   CHANGE="n"
 fi
 if [ "${CHANGE}" != 'n' ]; then
-[ -z ${PUB_IP} ] && PUB_IP="192.168.0.0"
 read -p "What is your public network IP [${PUB_IP}]: " IP_IN
 [ -z ${IP_IN} ] ||PUB_IP=${IP_IN}
 if  ! valid_ip ${PUB_IP} ; then
  die "Please enter a valid public ip"
 fi
 
-[ -z ${PUB_CIDR} ] && PUB_CIDR='24'
 read -p "What is the CIDR for that network[${PUB_CIDR}]: " PUB_CIDR
 [ -z ${PUB_CIDR} ] && PUB_CIDR='24'
-# We use 192.168.VLAN.0/24 as our public network range(s)
 
 echo "export PUB_IP=${PUB_IP}" > .network
 echo "export PUB_CIDR=${PUB_CIDR}" >> .network
 
-# We use 10.VLAN.1.0/24 for our private default network(s)
-# Find the Private and private networks:
-[ -z ${PRIV_IP} ] && PRIV_IP="10.168.0.0"
 read -p "What is your private network IP [${PRIV_IP}]: " IP_IN
 [ -z ${IP_IN} ] || PRIV_IP=${IP_IN}
 if  ! valid_ip ${PRIV_IP} ; then
  die "Please enter a valid public ip"
 fi
-[ -z ${PRIV_CIDR} ] && PRIV_CIDR='24'
 read -p "What is the CIDR for that network[${PRIV_CIDR}]: " PRIV_CIDR
 [ -z ${PRIV_CIDR} ] && PRIV_CIDR='24'
 
@@ -103,4 +98,4 @@ PUB_PRIV_ROUTER=`quantum router-gateway-set private_router_1 "${PUB_NET_ID}" | g
 PUB_NETWORK=`quantum port-list -- --device_id ${PRIV_ROUTER} --device_owner network:router_gateway | grep ip_address | awk -F'"' '{print $8}'`
 #PRIV_ROUTER=`quantum router-list | grep private_router_1 | awk -F' ' '{print $2}'`
 echo "Private Router and Subnet ID: qrouter-${PRIV_ROUTER} ${PUB_NETWORK}"
-router add -net ${PRIV_IP}/${PRIV_CIDR} gw ${PUB_NETWORK}
+route add -net ${PRIV_IP}/${PRIV_CIDR} gw ${PUB_NETWORK}
