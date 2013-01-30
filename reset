@@ -2,8 +2,21 @@
 source ~/openrc
 source .network >& /dev/null
 
+function sleep_count  () {
+# pass in a time (usually in seconds) and a message ( in "")
+echo -n $2
+  count=1
+  while [ $count -le $1 ]
+  do
+    echo -n '. '
+    sleep 1
+    (( count ++ ))
+  done
+}
+
 if ! nova delete test_vm ; then
  echo perhaps you did not create a vm?
+  sleep_count 15 "Wait 15 seconds for the vm to be deleted..."
  echo continuing...
 fi
 

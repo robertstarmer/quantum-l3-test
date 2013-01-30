@@ -35,7 +35,11 @@ if [ -z ${IMAGE_ID} ]; then
   # IMAGE_LOC='http://128.107.252.163/precise.img'
   read -p "Where would you like to download a QCOW format test image from [${IMAGE_LOC}]: " IMAGE_LOC_IN
   [ -z ${IMAGE_LOC_IN} ] && IMAGE_LOC_IN="${IMAGE_LOC}"
-  echo "export IMAGE_LOC=${IMAGE_LOC_IN}" >> .network
+  if [ grep IMAGE_LOC .network ] ; then
+   sed -e "s/IMAGE_LOC.*/IMAGE_LOC=${IMAGE_LOC_IN}/" .network
+  else
+   echo "export IMAGE_LOC=${IMAGE_LOC_IN}" >> .network
+  fi
   wget -O /tmp/test.img ${IMAGE_LOC_IN} 
   # import that image into glance
   glance image-create --name="test" --is-public=true --container-format=ovf --disk-format=qcow2 < /tmp/test.img
