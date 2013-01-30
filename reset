@@ -7,6 +7,7 @@ if ! nova delete test_vm ; then
  echo continuing...
 fi
 
+IMAGE_ID=`glance index | grep 'test' | head -1 |  awk -F' ' '{print $1}'`
 PRIV_SUBNET_ID=`quantum subnet-list | grep '192.' | awk -F' ' '{print $2}'`
 FLOAT_ID=`quantum floatingip-list | grep 192 | awk -F' ' '{print $2}'`
  if ! quantum floatingip-delete $FLOAT_ID >&/dev/null ; then
@@ -22,14 +23,28 @@ if ! quantum net-delete public  ; then
  echo 'public net not deleted'
 fi
 if ! quantum net-delete private ; then
- echo 'private net not delted'
+ echo 'private net not deleted'
 fi
 
 if ! quantum router-delete private_router_1 ; then
- echo 'router not delted'
+ echo 'router not deleted'
 fi
 if ! [ -z ${PRIV_IP} ] && route del -net ${PRIV_IP}/${PRIV_CIDR} ; then
   echo 'metadata route not found'
+fi
+if ! nova secgroup-delete sec_test ; then
+ echo 'no sec group defined?'
+fi
+if ! nova keypair-delete key_test ; then
+ echo 'no key pair defined?'
+fi
+if ! rm -rf /tmp/{id,test}* ; then
+ echo 'nothing in /tmp?'
+fi
+if [ ${IMAGE_ID} ] ; then
+  if ! glance image-delete $IMAGE_ID ; then
+    echo 'can not delete the test imgae'
+  fi
 fi
 
 if ! quantum-netns-cleanup ; then

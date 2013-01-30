@@ -33,9 +33,10 @@ IMAGE_ID=`glance index | grep 'test' | head -1 |  awk -F' ' '{print $1}'`
 if [ -z ${IMAGE_ID} ]; then
   [ -z ${IMAGE_LOC} ] && IMAGE_LOC='http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img'
   # IMAGE_LOC='http://128.107.252.163/precise.img'
-  read -p "Where would you like to download a QCOW format test image from [${IMAGE_LOC}]: " IMAGE_LOC
-  echo "export IMAGE_LOC=${IMAGE_LOC}" >> .network
-  wget -O /tmp/test.img ${IMAGE_LOC} 
+  read -p "Where would you like to download a QCOW format test image from [${IMAGE_LOC}]: " IMAGE_LOC_IN
+  [ -z ${IMAGE_LOC_IN} ] && IMAGE_LOC_IN="${IMAGE_LOC}"
+  echo "export IMAGE_LOC=${IMAGE_LOC_IN}" >> .network
+  wget -O /tmp/test.img ${IMAGE_LOC_IN} 
   # import that image into glance
   glance image-create --name="test" --is-public=true --container-format=ovf --disk-format=qcow2 < /tmp/test.img
   # Caputre the Image ID so taht we can call the right UUID for this image
