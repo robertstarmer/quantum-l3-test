@@ -47,13 +47,11 @@ if [ -z ${IMAGE_ID} ]; then
   IMAGE_ID=`glance index | grep 'test' | head -1 |  awk -F' ' '{print $1}'`
 fi
 
-# create a pub/priv keypair
-if ! [ -e /tmp/id_rsa ] ; then
-  ssh-keygen -f /tmp/id_rsa -t rsa -N ''
+# create a pub/priv keypair in the root directory. If not running as root, you will need to change this path. If keys in the .ssh path exist, you will be prompted to overwrite. Select "y" to overwrite or you will get a "permission denied error".
+ssh-keygen -f /root/.ssh/id_rsa -t rsa -N ''
   
-  #add the public key to nova.
-  nova keypair-add --pub_key /tmp/id_rsa.pub key_test
-fi
+#add the public key to nova.
+nova keypair-add --pub_key /root/.ssh/id_rsa.pub key_test
 
 # create a security group so that we can allow ssh, http, and ping traffic
 # when we add a floating IP (assuming you are adding floating IPs)
