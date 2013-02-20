@@ -14,8 +14,8 @@ echo -n $2
   done
 }
 
-if ! nova delete test_vm ; then
- echo perhaps you did not create a vm?
+if nova delete test_vm ; then
+ echo give the vm a chance to delete?
   sleep_count 15 "Wait 15 seconds for the vm to be deleted..."
  echo continuing...
 fi

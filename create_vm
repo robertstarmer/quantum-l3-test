@@ -16,7 +16,12 @@ echo -n $2
     (( count ++ ))
   done
 }
-COMPUTE_HOST=`nova-manage host list | grep com | head -1 | awk -F' ' '{print $1}'`
+function die ( ) {
+  echo $@
+  exit 1
+}
+
+COMPUTE_HOST=`nova-manage host list | grep 'com\|aio' | head -1 | awk -F' ' '{print $1}'`
 if [ -z ${COMPUTE_HOST} ] ; then
  die "There don't seem to be any 'compute' hosts available, perhaps run puppet agent on them again?"
 fi
@@ -52,8 +57,10 @@ if [ ! -e ~/.ssh/id_rsa.pub ] ; then
 ssh-keygen -f ~/.ssh/id_rsa -t rsa -N ''
 fi  
 #add the public key to nova.
+key_id=`nova keypair-list | grep key_test | awk -F' ' '{print $2}'`
+if [ -z $key_id ] ; then 
 nova keypair-add --pub_key ~/.ssh/id_rsa.pub key_test
-
+fi
 # create a security group so that we can allow ssh, http, and ping traffic
 # when we add a floating IP (assuming you are adding floating IPs)
 SEC_GROUP=`nova secgroup-list | grep sec_test`
@@ -79,7 +86,7 @@ while [ "${BUILD_STAT}" != "ACTIVE" ]; do
  sleep_count 5 " . "
  if [ "${BUILD_STAT}" == 'ACTIVE' ]; then
    break
- elif [ "${BUILD_STAT}" == 'ERROR' ]; then
+ elif [ "${BUILD_STAT}" != 'BUILD' ]; then
    die "The vm failed to build." 
  fi
 done
