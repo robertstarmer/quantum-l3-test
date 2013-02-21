@@ -14,15 +14,26 @@ echo -n $2
   done
 }
 
-if nova delete test_vm ; then
- echo give the vm a chance to delete?
-  sleep_count 15 "Wait 15 seconds for the vm to be deleted..."
- echo continuing...
-fi
+DEL_STAT=`nova delete test_vm | grep status | awk -F' ' '{print $4}'`
+echo "Waiting for VM to delete"
+while [ ! -z "${DEL_STAT}" ]; do
+ DEL_STAT=`nova show test_vm | grep status | awk -F' ' '{print $4}'`
+ sleep_count 5 " . "
+ if [ -z "${DEL_STAT}" ]; then
+   break
+ fi
+done
 
 IMAGE_ID=`glance index | grep 'test' | head -1 |  awk -F' ' '{print $1}'`
-PRIV_SUBNET_ID=`quantum subnet-list | grep '192.' | awk -F' ' '{print $2}'`
-FLOAT_ID=`quantum floatingip-list | grep 192 | awk -F' ' '{print $2}'`
+PRIV_SUBNET_ID=`quantum subnet-list | grep ${PUB_IP} | awk -F' ' '{print $2}'`
+
+OIFS=$IFS
+IFS='.'
+ip=(${PUB_IP})
+IFS=$OIFS
+PRIV_SUB_SRC="${ip[0]}.${ip[1]}.${ip[2]}"
+echo "Deleting floating IP from Subnet ${PRIV_SUB_SRC}"
+FLOAT_ID=`quantum floatingip-list | grep ${PRIV_SUB_SRC} | awk -F' ' '{print $2}'`
  if ! quantum floatingip-delete $FLOAT_ID >&/dev/null ; then
   echo perhaps you did not create a floating ip?
   echo continuing...
@@ -43,7 +54,7 @@ if ! quantum router-delete private_router_1 ; then
  echo 'router not deleted'
 fi
 if ! [ -z ${PRIV_IP} ] && route del -net ${PRIV_IP}/${PRIV_CIDR} ; then
-  echo 'metadata route not found'
+  echo 'metadata route deleted'
 fi
 if ! nova secgroup-delete sec_test ; then
  echo 'no sec group defined?'
